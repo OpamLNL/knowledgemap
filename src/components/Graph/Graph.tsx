@@ -635,9 +635,13 @@ export default function Graph({
 
         const { nodes, edges } = filterGraphByGroup(data.nodes, data.edges, groupId);
         const styleOnly = editModeRef.current && !fullLayout;
+        const viewStatusRefresh =
+            !editModeRef.current && !fullLayout && (nodesDS.current?.length ?? 0) > 0;
 
         let layout: Map<number, { x: number; y: number }>;
-        if (styleOnly) {
+        if (viewStatusRefresh) {
+            layout = new Map(nodeLayoutRef.current);
+        } else if (styleOnly) {
             layout = new Map(nodeLayoutRef.current);
             const computed = layoutTopicsInGroup(nodes, edges, { editMode: true });
             const nodeIds = new Set(nodes.map((n) => n.id));
@@ -665,7 +669,7 @@ export default function Graph({
             editModeRef.current,
         );
 
-        if (styleOnly) {
+        if (styleOnly || viewStatusRefresh) {
             nodesDS.current.update(
                 styled.map((node) => {
                     const { x: _x, y: _y, ...visual } = node as {
@@ -681,10 +685,12 @@ export default function Graph({
             nodesDS.current.add(styled);
         }
 
-        edgesDS.current.clear();
-        edgesDS.current.add(
-            editModeRef.current ? styledTopicEdges(edges, true) : edges,
-        );
+        if (!viewStatusRefresh) {
+            edgesDS.current.clear();
+            edgesDS.current.add(
+                editModeRef.current ? styledTopicEdges(edges, true) : edges,
+            );
+        }
     }, []);
 
     handleNodePickRef.current = (rawId: number | string) => {
@@ -1154,7 +1160,7 @@ export default function Graph({
         }
 
         if (sameView && viewScope === 'topics') {
-            patchTopicStyles(true);
+            patchTopicStyles(false);
             return;
         }
 

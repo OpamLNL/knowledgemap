@@ -9,6 +9,7 @@ import EditorPage from './pages/EditorPage';
 import Topics from './pages/Topics';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import ApiDocsPage from './pages/ApiDocsPage';
 import ProfilePage from './pages/ProfilePage';
 import Login from './pages/Login';
 import AdminPage from './pages/admin/AdminPage.tsx';
@@ -34,6 +35,7 @@ function App() {
                     <Route path="/editor" element={<Navigate to="/maps" replace />} />
                     <Route path="/topics" element={<Topics />} />
                     <Route path="/about" element={<About />} />
+                    <Route path="/api-docs" element={<ApiDocsPage />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/users/:userId" element={<UserPublicProfilePage />} />

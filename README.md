@@ -28,7 +28,22 @@ npm run dev
 |--------|------|
 | `VITE_API_BASE_URL` | URL API з префіксом `/api`, напр. `http://localhost:3002/api` |
 
-Firebase-конфіг — у `src/firebase.ts` (проєкт Firebase залишається окремим).
+Firebase-конфіг — у `src/firebase.ts` (проєкт `diploma-web`). Після деплoy на Vercel додайте домен у Firebase Console → Authentication → Authorized domains.
+
+## Деплой на Vercel
+
+1. **Add New → Project** → той самий Git-репозиторій
+2. **Root Directory** → `graphedit`
+3. Framework: **Vite** (або підхопиться з `vercel.json`)
+4. Environment Variable:
+
+| Змінна | Значення |
+|--------|----------|
+| `VITE_API_BASE_URL` | `https://YOUR-BACKEND.vercel.app/api` |
+
+5. Deploy
+
+Після деплoy: у **backend** Vercel встановіть `FRONTEND_URL=https://your-frontend.vercel.app` і redeploy backend (CORS). Деталі — [`DEPLOY_VERCEL.md`](../DEPLOY_VERCEL.md) у корені репозиторію.
 
 ## Скрипти
 

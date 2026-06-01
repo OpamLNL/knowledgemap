@@ -13,7 +13,7 @@ import MapGroupsOverview from '../components/MapPage/MapGroupsOverview';
 import NodeInfoPanel from '../components/NodeInfoPanel/NodeInfoPanel';
 import { nodesApi, type GroupNodesResponse, type MapOverviewResponse } from '../api/nodes';
 import { graphEditMapsApi, type GraphEditMap } from '../api/graphEditMaps';
-import { type ProgressSummary } from '../api/progress';
+import { progressApi, type ProgressSummary } from '../api/progress';
 import { useAuth } from '../context/AuthContext';
 import type { Topic } from '../api/topics';
 import { mergeGroupLayouts } from '../utils/groupGraph';
@@ -46,6 +46,28 @@ function buildOverviewPayload(overview: MapOverviewResponse): GraphPayload {
     }));
 
     return { nodes: [], edges: [], groups, groupEdges };
+}
+
+function applySummaryToOverview(
+    prev: MapOverviewResponse,
+    summary: ProgressSummary,
+): MapOverviewResponse {
+    const statusById = new Map(summary.nodes.map((n) => [n.id, n.status]));
+    return {
+        ...prev,
+        progress: {
+            mapId: summary.mapId,
+            total: summary.total,
+            completed: summary.completed,
+            available: summary.available,
+            locked: summary.locked,
+            percent: summary.percent,
+        },
+        nodesIndex: prev.nodesIndex.map((n) => ({
+            ...n,
+            status: statusById.get(n.id) ?? n.status,
+        })),
+    };
 }
 
 function groupResponseToPayload(data: GroupNodesResponse): { nodes: NodeData[]; edges: EdgeData[] } {
@@ -110,16 +132,23 @@ export default function MapPage() {
         return overviewData;
     }, [mapId, isEditor]);
 
+    type LoadGroupOptions = { force?: boolean; silent?: boolean };
+
     const loadGroupIntoPayload = useCallback(
-        async (groupId: string, force = false) => {
+        async (groupId: string, options: LoadGroupOptions = {}) => {
+            const { force = false, silent = false } = options;
             let cached = groupCacheRef.current.get(groupId);
             if (!cached || force) {
-                setLoadingGroup(true);
+                if (!silent) {
+                    setLoadingGroup(true);
+                }
                 try {
                     cached = await nodesApi.getGroupNodes(mapId, groupId);
                     groupCacheRef.current.set(groupId, cached);
                 } finally {
-                    setLoadingGroup(false);
+                    if (!silent) {
+                        setLoadingGroup(false);
+                    }
                 }
             }
 
@@ -291,11 +320,25 @@ export default function MapPage() {
     const handleProgressUpdate = async () => {
         if (!mapId || Number.isNaN(mapId)) return;
         try {
-            const overviewData = await loadOverview();
+            const summary = await progressApi.getMySummary(mapId);
+            setProgressSummary(summary);
+
+            setOverview((prev) => (prev ? applySummaryToOverview(prev, summary) : prev));
+
             if (viewScope === 'topics' && selectedGroupId) {
-                await loadGroupIntoPayload(selectedGroupId, true);
+                await loadGroupIntoPayload(selectedGroupId, { force: true, silent: true });
             } else {
-                setGraphPayload(buildOverviewPayload(overviewData));
+                const overviewData = await nodesApi.getMapOverview(mapId);
+                setOverview(overviewData);
+                const groupPayload = buildOverviewPayload(overviewData);
+                setGraphPayload((prev) => {
+                    if (!prev) return groupPayload;
+                    return {
+                        ...prev,
+                        groups: groupPayload.groups,
+                        groupEdges: groupPayload.groupEdges,
+                    };
+                });
             }
         } catch (e) {
             console.error(e);

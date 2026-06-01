@@ -54,7 +54,10 @@ export default function ProfilePage() {
 
     const avatarUrl = resolveProfileAvatar(cabinet?.user.avatarUrl);
     const hasCustomAvatar =
-        !!cabinet?.user.avatarUrl?.startsWith('/api/uploads/avatars/');
+        !!cabinet?.user.avatarUrl &&
+        (cabinet.user.avatarUrl.startsWith('/api/uploads/avatars/') ||
+            cabinet.user.avatarUrl.includes('ibb.co') ||
+            cabinet.user.avatarUrl.includes('imgbb.com'));
 
     useEffect(() => {
         if (!user) {

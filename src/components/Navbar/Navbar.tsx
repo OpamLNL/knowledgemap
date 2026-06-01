@@ -19,6 +19,7 @@ export const navLinks: NavLink[] = [
     { path: '/my-maps', label: 'Мої карти', authOnly: true },
     { path: '/teaching', label: 'Статистика', authOnly: true, editorOnly: true },
     { path: '/topics', label: 'Теми' },
+    { path: '/api-docs', label: 'API' },
     { path: '/profile', label: 'Кабінет', authOnly: true },
     { path: '/admin/adminPage', label: 'Адмін', adminOnly: true },
 ];
